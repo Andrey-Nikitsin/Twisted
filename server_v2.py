@@ -7,31 +7,41 @@ class ServerCL(LineReceiver):
         self.user_info = addr
         self.users = users
 
-
     def connectionMade(self):
         self.transport.write(b'Server connect\n')
         self.transport.write(b'inter you name\n')
-        self.users.update({self : self.user_info})
+        self.users.update({self : ''})
         print(self.users)
 
     def dataReceived(self, data):
-        data = data.decode("UTF-8")
+        # print(self.users)
         def SaveNameUser(NameUser):
             for key in self.users.keys():
-                if key == NameUser[:-2]:
-                    print(NameUser[:-2])
-                    self.transport.write(b'this name taken, write you name\n')
-                    return 'repeat'
-                else:
+                # print(key)
+                if key == self:
                     self.users.pop(self)
-                    self.users.update({NameUser[:-2]:self.user_info})
+                    self.users.update({self:(NameUser[:-2],self.user_info)})
+                    print(self.users)
                     break
-                    return 'OK'
 
-        if self in self.users.keys():
-            while SaveNameUser(data) == 'repeat':
+        def GeneralChat(messange):
+            print(messange)
+            for key in self.users.keys():
+                if len(self.users.get(self)) > 0:
+                    name = self.users.get(self)[0]
+                    key.transport.write(name)
+                    key.transport.write(b':\t')
+                    key.transport.write(messange)
+
+
+        for key in self.users.keys():
+            if len(self.users.get(key)) == 0:
                 SaveNameUser(data)
-        print(self.users)
+                break
+            else:
+                GeneralChat(data)
+
+
 
 class FactoryServerCl(ServerFactory):
     def __init__(self):
